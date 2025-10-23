@@ -1,6 +1,6 @@
 # routes.py
 from sqlite3 import IntegrityError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlmodel import Session, select
 import sqlite3
 from models import Member, Contribution
@@ -41,9 +41,15 @@ def create_member(member: MemberCreate):
         return db_member
 
 @router.get("/members")
-def read_members():
+def read_members(skip: int = Query(0, ge=0), limit: int = Query(10, ge=1)):
+    """
+    Get members with pagination.
+    - skip: number of records to skip (offset)
+    - limit: number of records to return
+    """
     with Session(engine) as session:
-        members = session.exec(select(Member)).all()
+        statement = select(Member).offset(skip).limit(limit)
+        members = session.exec(statement).all()
         return members
 
 @router.get("/members/{member_id}")
